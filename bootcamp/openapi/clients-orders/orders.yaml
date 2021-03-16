@@ -1,0 +1,218 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Swagger itemstore
+  description: A sample API as an example to demonstrate features in the OpenAPI 3.0 specification
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: http://store.bootcamp.sbt.com/api
+paths:
+  /client/{login}/orders/{status}:
+    get:
+      description: show orders with desired status (TODO check authenticated, check rights)
+      operationId: findOrdersForClient
+      parameters:
+        - name: login
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: status
+          in: query
+          description: order status (TODO use $ref _ "#/components/schemas/orderStatus")
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: list of client"s orders for desired status
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/clientOrdersHistory"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "clients.yaml#/components/schemas/Error"
+                
+  /orders:
+    post:
+      description: Creates a new order
+      operationId: createClientsOrder
+      requestBody:
+        description: item to add to the store
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/newClientsOrder"
+      responses:
+        "200":
+          description: just-created item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/clientsOrder"
+    put:
+      description: Updates existing order (TODO check if order is able to be corrected)
+      operationId: updateClientsOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/clientsOrder"
+      responses:
+        "200":
+          description: just-updated order
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/clientsOrder"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "clients.yaml#/components/schemas/Error"
+  /order/{id}:
+    get:
+      operationId: find logged user"s own order by id (TODO check rights, check authenticated)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: order by id (TODO check rights)
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/"
+        "403":
+          description: no rights
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "clients.yaml#/components/schemas/Error"
+    delete:
+      description: discard order (TODO check rights)
+      operationId: discardOrder
+      parameters:
+        - name: id
+          in: path
+          description: ID of user"s order to discard
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: order discarded
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "clients.yaml#/components/schemas/Error"
+
+components:
+  schemas:
+
+    clientOrders:
+      type: object
+      required:
+        - client
+        - status
+      properties:
+        client:
+          $ref: "clients.yaml#/components/schemas/client"
+        orderList:
+          $ref: "#/components/schemas/orderList"
+        status:
+          $ref: "#/components/schemas/orderStatus"
+
+    clientOrdersHistory:
+      type: array
+      items:
+        $ref: "#/components/schemas/clientsOrder"
+
+    clientsOrder:
+      allOf:
+        - $ref: "#/components/schemas/newClientsOrder"
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: integer
+              format: int64
+
+    newClientsOrder:
+      type: object
+      required:
+        - orderDate
+        - client
+        - orderList
+        - orderSum
+      properties:
+        id:
+          type: integer
+          format: int64
+        orderDate:
+          type: string
+          format: date-time
+        client:
+          $ref: "clients.yaml#/components/schemas/client"
+        orderList:
+          $ref: "#/components/schemas/orderList"
+        orderSum:
+          type: number
+          format: float
+    orderList:
+      type: array
+      items:
+        $ref: "#/components/schemas/orderItem"
+
+    orderItem:
+      allOf:
+        - $ref: "#/components/schemas/newOrderItem"
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: integer
+              format: int64
+
+    newOrderItem:
+      type: object
+      required:
+        - priceBought
+        - qtyBought
+      properties:
+        priceBought:
+          type: number
+          format: float
+        qtyBought:
+          type: integer
+          format: int32
+
+    orderStatus:
+      enum:
+        - "All"
+        - "ActiveOnly"
+        - "CompletedOnly"
+        - "CancelledOnly"
+        - "AllButCancelled"

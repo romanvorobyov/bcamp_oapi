@@ -1,0 +1,155 @@
+openapi: "3.0.0"
+info:
+  version: 1.0.0
+  title: Swagger itemstore
+  description: A sample API as an example to demonstrate features in the OpenAPI 3.0 specification
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+servers:
+  - url: http://store.bootcamp.sbt.com/api
+paths:
+  /clients:
+    get:
+      description: Returns all not disabled clients (OR all clients with recent orders... TODO - secure it!)
+      operationId: findClients
+      responses:
+        "200":
+          description: response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/client"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /client/{login}:
+    get:
+      description: Return client by login
+      operationId: findClientByLogin
+      responses:
+        "200":
+          description: existing client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/client"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      description: Creates a new client (TODO check for duplicates)
+      operationId: createClient
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/newClient"
+      responses:
+        "200":
+          description: just-created client
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/client"
+    put:
+      description: Updates existing item (price, quantity or description)
+      operationId: updateClient
+      requestBody:
+        description: item to update it"s info
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/client"
+      responses:
+        "200":
+          description: just-updated item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/client"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /client/delete/{login}:
+    delete:
+      description: deletes a client (TODO check rights, check if it is safe, or just set disabled)
+      operationId: deleteClient
+      parameters:
+        - name: login
+          in: path
+          description: ID of client to delete (disable)
+          required: true
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: client deleted (or disabled)
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    client:
+      allOf:
+        - $ref: "#/components/schemas/newClient"
+        - type: object
+          required:
+            - id
+          properties:
+            id:
+              type: integer
+              format: int64
+
+    newClient:
+      type: object
+      required:
+        - name
+        - login
+        - email
+        - dayOfBirth
+      properties:
+        name:
+          type: string
+        login:
+          type: string
+        email:
+          type: string
+          format: email
+        dayOfBirth:
+          type: string
+          format: date
+        disabled:
+          type: boolean
+          default: false
+
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string
