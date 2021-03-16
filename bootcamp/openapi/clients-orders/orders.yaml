@@ -9,7 +9,7 @@ info:
 servers:
   - url: http://store.bootcamp.sbt.com/api
 paths:
-  /client/{login}/orders/{status}:
+  /clients/{login}/orders/{status}:
     get:
       description: show orders with desired status (TODO check authenticated, check rights)
       operationId: findOrdersForClient
@@ -27,7 +27,7 @@ paths:
             type: string
       responses:
         "200":
-          description: list of client"s orders for desired status
+          description: list of client's orders for desired status
           content:
             application/json:
               schema:
@@ -41,7 +41,31 @@ paths:
               schema:
                 $ref: "clients.yaml#/components/schemas/Error"
                 
-  /orders:
+  /orders/:
+    get:
+      description: show own orders with desired status (TODO check authenticated & rights), default AllButCancelled
+      operationId: findOwnOrders
+      parameters:
+        - name: status
+          in: query
+          description: order status
+          required: true
+          $ref: "#/components/schemas/orderStatus"
+      responses:
+        "200":
+          description: list of own orders with desired status
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/clientOrdersHistory"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "clients.yaml#/components/schemas/Error"
     post:
       description: Creates a new order
       operationId: createClientsOrder
@@ -81,9 +105,9 @@ paths:
             application/json:
               schema:
                 $ref: "clients.yaml#/components/schemas/Error"
-  /order/{id}:
+  /orders/{id}:
     get:
-      operationId: find logged user"s own order by id (TODO check rights, check authenticated)
+      operationId: find logged user's own order by id (TODO check rights, check authenticated)
       parameters:
         - name: id
           in: path
@@ -112,13 +136,13 @@ paths:
       parameters:
         - name: id
           in: path
-          description: ID of user"s order to discard
+          description: ID of user's order to discard
           required: true
           schema:
             type: integer
             format: int64
       responses:
-        "204":
+        "200":
           description: order discarded
         default:
           description: unexpected error
@@ -211,8 +235,9 @@ components:
 
     orderStatus:
       enum:
-        - "All"
-        - "ActiveOnly"
-        - "CompletedOnly"
-        - "CancelledOnly"
-        - "AllButCancelled"
+        - All
+        - ActiveOnly
+        - CompletedOnly
+        - CancelledOnly
+        - AllButCancelled
+      default: AllButCancelled
