@@ -7,85 +7,87 @@ paths:
   /clients:
     get:
       responses:
-        '200':
+        "200":
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/client'
+                  $ref: "#/components/schemas/client"
           description: response
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: unexpected error
       operationId: findClients
-      description: 'Returns all not disabled clients (OR all clients with recent orders... TODO - secure it!)'
+      description: Returns all not disabled clients (OR all clients with recent orders... TODO - secure it!)
     put:
+      description: Updates existing client
+      operationId: updateClient
       requestBody:
-        description: item to update it's info
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/client'
+              $ref: "#/components/schemas/client"
         required: true
       responses:
-        '200':
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/client'
+                $ref: "#/components/schemas/client"
           description: just-updated item
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: unexpected error
-      operationId: updateClient
-      description: 'Updates existing item (price, quantity or description)'
+
     post:
+      description: Creates a new client (TODO check for duplicates)
+      operationId: createClient
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/newClient'
+              $ref: "#/components/schemas/newClient"
         required: true
       responses:
-        '200':
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/client'
+                $ref: "#/components/schemas/client"
           description: just-created client
-      operationId: createClient
-      description: Creates a new client (TODO check for duplicates)
-  '/client/delete/{login}':
+
+  /clients/delete/{login}:
     delete:
+      description: deletes a client (TODO check rights, check if it is safe, or just set disabled on PUT)
       parameters:
         - name: login
-          description: ID of client to delete (disable)
           schema:
             format: int64
             type: integer
           in: path
           required: true
       responses:
-        '204':
-          description: client deleted (or disabled)
+        "204":
+          description: client deleted
+        "404":
+          description: client not found by login
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: unexpected error
       operationId: deleteClient
-      description: 'deletes a client (TODO check rights, check if it is safe, or just set disabled)'
-  '/clients/{login}/orders':
+  /clients/{login}/orders:
     get:
-      description: 'show orders with desired status (TODO check authenticated, check rights)'
+      description: show orders with desired status (TODO check authenticated, check rights)
       operationId: findOrdersForClient
       parameters:
         - name: login
@@ -100,48 +102,50 @@ paths:
           schema:
             type: string
       responses:
-        '200':
-          description: list of client's orders for desired status
+        "200":
+          description: list of clients orders with desired status
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/clientOrder'
+                  $ref: "#/components/schemas/clientOrder"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
   /clients/findById/{login}:
     get:
       parameters:
         - name: login
           in: path
-          description: "client's login to search with"
+          description: clients login to search with
           schema:
             type: string
           required: true
 
       responses:
-        '200':
+        "200":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/client'
+                $ref: "#/components/schemas/client"
           description: existing client
+        "404":
+          description: user not found by login
         default:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
           description: unexpected error
       operationId: findClientByLogin
       description: Return client by login
   /orders:
     get:
-      description: 'show own orders with desired status (TODO check authenticated & rights), default AllButCancelled'
+      description: show own orders with desired status (TODO check authenticated & rights), default AllButCancelled
       operationId: findOwnOrders
       parameters:
         - name: status
@@ -150,64 +154,90 @@ paths:
           required: true
           schema:
             type: string
-          #$ref '#/components/schemas/orderStatus'
+          #TODO $ref "#/components/schemas/orderStatus"
       responses:
-        '200':
+        "200":
           description: list of own orders with desired status
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/clientOrder'
+                  $ref: "#/components/schemas/clientOrder"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
     post:
       description: Creates a new order
       operationId: createClientsOrder
+      parameters:
+        - name: orderItems
+          in: query
+          description: changed orderItems list (orders content)
+          required: true
+          style: form
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/orderItem"
       requestBody:
-        description: item to add to the store
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/newClientOrder'
+              $ref: "#/components/schemas/newClientOrder"
       responses:
-        '200':
+        "200":
           description: just-created item
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/clientOrder'
+                $ref: "#/components/schemas/clientOrder"
     put:
-      description: Updates existing order (TODO check if order is able to be corrected)
-      operationId: updateClientsOrder
+      description: edit content of the order - list of orderItems (TODO check rights, payment method, etc.)
+      operationId: editOrder
+      parameters:
+        - name: id
+          in: query
+          description: ID of the order to edit
+          required: true
+          schema:
+            type: integer
+            format: int64
+        - name: orderItems
+          in: query
+          description: changed orderItems list (orders content)
+          required: true
+          style: form
+          schema:
+            type: array
+            items:
+              $ref: "#/components/schemas/orderItem"
       requestBody:
-        required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/clientOrder'
+              $ref: "#/components/schemas/clientOrder"
       responses:
-        '200':
-          description: just-updated order
+        "200":
+          description: order with changed contents
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/clientOrder'
+                $ref: "#/components/schemas/clientOrder"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-  '/orders/{id}':
+                $ref: "#/components/schemas/Error"
+
+  /orders/{id}:
     get:
-      operationId: 'find logged user''s own order by id (TODO check rights, check authenticated)'
+      operationId: find logged users own order by id (TODO check rights, check authenticated)
       parameters:
         - name: id
           in: path
@@ -216,44 +246,55 @@ paths:
             type: integer
             format: int64
       responses:
-        '200':
+        "200":
           description: order by id (TODO check rights)
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/clientOrder'
-        '403':
+                $ref: "#/components/schemas/clientOrder"
+        "403":
           description: no rights
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-    delete:
-      description: discard order (TODO check rights)
+                $ref: "#/components/schemas/Error"
+
+
+  /orders/{id}/cancel:
+    get:
+      description: cancel active order (TODO check rights)
       operationId: discardOrder
       parameters:
         - name: id
           in: path
-          description: ID of user's order to discard
+          description: ID of users order to discard
           required: true
           schema:
             type: integer
             format: int64
       responses:
-        '200':
-          description: order discarded
+        "200":
+          description: order cancelled successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/clientOrder"
+        "404":
+          description: order not found
+        "406":
+          description: unacceptable to cancel inactive orders
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /items:
     get:
-      description: Returns all items in stock
+      description: Return items in stock filtered by tags (categories) and/or price (TODO paging, limit)
       operationId: findItems
       parameters:
         - name: tags
@@ -267,33 +308,26 @@ paths:
               type: string
         - name: priceLowerThan
           in: query
-          description: 'selects items with price only below or equal to this (TODO -- priceHigherThan, yearOfProduction)'
+          description: selects items with price only below or equal to this (TODO -- priceHigherThan, yearOfProduction)
           required: false
           schema:
             type: number
             format: float
-        - name: limit
-          in: query
-          description: maximum number of results to return
-          required: false
-          schema:
-            type: integer
-            format: int32
       responses:
-        '200':
+        "200":
           description: response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/item'
+                  $ref: "#/components/schemas/item"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
     post:
       description: Creates a new item in the store (TODO Check for duplicates)
@@ -304,22 +338,44 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/newItem'
+              $ref: "#/components/schemas/newItem"
       responses:
-        '200':
+        "200":
           description: just-created item
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/item'
+                $ref: "#/components/schemas/item"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-
-  '/item/{id}':
+                $ref: "#/components/schemas/Error"
+    put:
+      description: Creates a new item in the store (TODO Check for duplicates)
+      operationId: editItem
+      requestBody:
+        description: item to add to the store
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/item"
+      responses:
+        "200":
+          description: just-created item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/item"
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /items/{id}:
     get:
       description: Returns item by id (TODO check if it exists)
       operationId: findItemById
@@ -332,21 +388,21 @@ paths:
             type: integer
             format: int64
       responses:
-        '200':
+        "200":
           description: item description
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/item'
+                $ref: "#/components/schemas/item"
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
     delete:
-      description: deletes by Id
+      description: delete item by Id
       operationId: deleteItem
       parameters:
         - name: id
@@ -356,23 +412,23 @@ paths:
             type: integer
             format: int64
       responses:
-        '204':
+        "204":
           description: item deleted
         default:
           description: unexpected error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
 
 components:
   schemas:
 
     clientOrder:
-      description: one client's order, with id
+      description: one clients order, with id
       allOf:
-        - $ref: '#/components/schemas/newClientOrder'
+        - $ref: "#/components/schemas/newClientOrder"
         - type: object
           required:
             - id
@@ -382,7 +438,7 @@ components:
               format: int64
 
     newClientOrder:
-      description: one client's order, not persisted
+      description: one clients order, not persisted
       type: object
       required:
         - orderDate
@@ -395,22 +451,22 @@ components:
           type: string
           format: date-time
         client:
-          $ref: clients.yaml#/components/schemas/client
+          $ref: "#/components/schemas/client"
         orderItemsList:
           type: array
           items:
-            $ref: '#/components/schemas/orderItem'
+            $ref: "#/components/schemas/orderItem"
         orderSum:
           type: number
           format: float
         status:
-          description: TODO use $ref_ '#/components/schemas/orderStatus'
+          description: TODO use $ref_ "#/components/schemas/orderStatus"
           type: string
 
     orderItem:
       description: one order item, with id
       allOf:
-        - $ref: '#/components/schemas/newOrderItem'
+        - $ref: "#/components/schemas/newOrderItem"
         - type: object
           required:
             - id
@@ -428,7 +484,7 @@ components:
         - qtyBought
       properties:
         item:
-          $ref: '#/components/schemas/item'
+          $ref: "#/components/schemas/item"
         priceBought:
           type: number
           format: float
@@ -439,7 +495,7 @@ components:
     item:
       description: item in stock with id
       allOf:
-        - $ref: '#/components/schemas/newItem'
+        - $ref: "#/components/schemas/newItem"
         - type: object
           required:
             - id
@@ -486,7 +542,7 @@ components:
     client:
       description: client with id
       allOf:
-        - $ref: '#/components/schemas/newClient'
+        - $ref: "#/components/schemas/newClient"
         - required:
             - id
           type: object
