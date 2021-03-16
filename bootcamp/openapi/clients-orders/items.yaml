@@ -50,6 +50,7 @@ paths:
             application/json:
               schema:
                 $ref: "clients.yaml#/components/schemas/Error"
+
     post:
       description: Creates a new item in the store (TODO Check for duplicates)
       operationId: addItem
@@ -117,6 +118,7 @@ paths:
             application/json:
               schema:
                 $ref: "clients.yaml#/components/schemas/Error"
+
 components:
   schemas:
     item:

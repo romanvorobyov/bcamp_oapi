@@ -66,7 +66,7 @@ paths:
       description: Updates existing item (price, quantity or description)
       operationId: updateClient
       requestBody:
-        description: item to update it"s info
+        description: item to update it's info
         required: true
         content:
           application/json:
